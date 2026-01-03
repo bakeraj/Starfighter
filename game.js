@@ -95,7 +95,8 @@ function shootBullet(x, y) {
         height: 25, // Longer bullets
         speed: 8,
         color: '#ffff00',
-        time: 0 // Animation time for pulsing effect
+        time: 0, // Animation time for pulsing effect
+        damage: 1 // Damage per bullet
     });
 }
 
@@ -122,6 +123,7 @@ function shootTorpedo() {
 function createEnemy() {
     const baseSpeed = Math.random() * 2 + 2;
     const horizontalSpeed = (Math.random() - 0.5) * 3; // Random horizontal speed (-1.5 to 1.5)
+    const health = Math.floor(Math.random() * 6) + 5; // 5-10 health points
     enemies.push({
         x: Math.random() * (canvas.width - 40),
         y: -40,
@@ -129,11 +131,35 @@ function createEnemy() {
         height: 40,
         vx: horizontalSpeed, // Horizontal velocity
         vy: baseSpeed, // Vertical velocity
-        color: '#ff4444'
+        color: '#ff4444',
+        health: health,
+        maxHealth: health,
+        damageFlash: 0 // For visual feedback when hit
     });
 }
 
-// Create particle effect
+// Create small hit particles (for when enemy is hit but not destroyed)
+function createHitParticles(x, y, color) {
+    const hitColors = [color, '#ffaa44', '#ffff44'];
+    const particleCount = 6; // Small number of particles
+    
+    for (let i = 0; i < particleCount; i++) {
+        const angle = (Math.PI * 2 * i) / particleCount + Math.random() * 0.3;
+        const speed = Math.random() * 3 + 1; // Slower, smaller particles
+        particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 15 + Math.random() * 10,
+            maxLife: 15 + Math.random() * 10,
+            size: Math.random() * 2 + 1, // Smaller particles
+            color: hitColors[Math.floor(Math.random() * hitColors.length)]
+        });
+    }
+}
+
+// Create full particle explosion (for when enemy is destroyed)
 function createParticles(x, y, color) {
     const explosionColors = ['#ff4444', '#ff8844', '#ffaa44', '#ffff44', '#ffaa88'];
     const particleCount = 25;
@@ -331,11 +357,21 @@ function updateTorpedoes() {
                     );
                     
                     if (distance < TORPEDO_EXPLOSION_RADIUS) {
-                        // Enemy is in explosion radius - destroy it
-                        createParticles(enemyCenterX, enemyCenterY, enemy.color);
-                        enemies.splice(j, 1);
-                        score += 10;
-                        updateScore();
+                        // Deal damage (torpedoes deal 8 damage)
+                        enemy.health -= 8;
+                        enemy.damageFlash = 20;
+                        
+                        // Check if enemy is destroyed
+                        if (enemy.health <= 0) {
+                            // Full explosion when destroyed
+                            createParticles(enemyCenterX, enemyCenterY, enemy.color);
+                            enemies.splice(j, 1);
+                            score += 10;
+                            updateScore();
+                        } else {
+                            // Small hit particles when hit but not destroyed
+                            createHitParticles(enemyCenterX, enemyCenterY, '#ffaa00');
+                        }
                     }
                 }
             }
@@ -368,6 +404,11 @@ function updateEnemies() {
 
     for (let i = enemies.length - 1; i >= 0; i--) {
         const enemy = enemies[i];
+        
+        // Update damage flash counter
+        if (enemy.damageFlash > 0) {
+            enemy.damageFlash--;
+        }
         
         // Update position based on velocity
         enemy.x += enemy.vx;
@@ -450,11 +491,25 @@ function checkCollisions() {
     for (let i = bullets.length - 1; i >= 0; i--) {
         for (let j = enemies.length - 1; j >= 0; j--) {
             if (isColliding(bullets[i], enemies[j])) {
-                createParticles(enemies[j].x, enemies[j].y, enemies[j].color);
+                const enemy = enemies[j];
+                const bullet = bullets[i];
+                
+                // Damage the enemy
+                enemy.health -= bullet.damage;
+                enemy.damageFlash = 20; // Flash white when hit (longer duration)
                 bullets.splice(i, 1);
-                enemies.splice(j, 1);
-                score += 10;
-                updateScore();
+                
+                // Check if enemy is destroyed
+                if (enemy.health <= 0) {
+                    // Full explosion when destroyed
+                    createParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.color);
+                    enemies.splice(j, 1);
+                    score += 10;
+                    updateScore();
+                } else {
+                    // Small hit particles when hit but not destroyed
+                    createHitParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, bullet.color);
+                }
                 break;
             }
         }
@@ -754,11 +809,24 @@ function drawEnemies() {
         ctx.shadowBlur = 6;
         ctx.shadowColor = enemy.color;
         
-        // Main body gradient
+        // Calculate flash intensity (slower fade)
+        const flashIntensity = enemy.damageFlash > 0 ? enemy.damageFlash / 20 : 0;
+        
+        // Main body gradient (with flash effect if damaged)
         const bodyGradient = ctx.createLinearGradient(x, y - h/2, x, y + h/2);
-        bodyGradient.addColorStop(0, '#ff6666');
-        bodyGradient.addColorStop(0.5, enemy.color);
-        bodyGradient.addColorStop(1, '#cc2222');
+        if (flashIntensity > 0) {
+            // Flash effect - blend white with enemy colors
+            const r1 = Math.floor(102 + (255 - 102) * flashIntensity);
+            const r2 = Math.floor(68 + (255 - 68) * flashIntensity);
+            const r3 = Math.floor(34 + (255 - 34) * flashIntensity);
+            bodyGradient.addColorStop(0, `rgb(255, ${r1}, ${r1})`);
+            bodyGradient.addColorStop(0.5, `rgb(255, ${r2}, ${r2})`);
+            bodyGradient.addColorStop(1, `rgb(255, ${r3}, ${r3})`);
+        } else {
+            bodyGradient.addColorStop(0, '#ff6666');
+            bodyGradient.addColorStop(0.5, enemy.color);
+            bodyGradient.addColorStop(1, '#cc2222');
+        }
         ctx.fillStyle = bodyGradient;
         
         // Main body (diamond/arrow shape)
@@ -773,14 +841,24 @@ function drawEnemies() {
         ctx.closePath();
         ctx.fill();
         
-        // Side panels/armor
-        ctx.fillStyle = '#cc2222';
+        // Side panels/armor (with flash)
+        if (flashIntensity > 0) {
+            const r = Math.floor(34 + (255 - 34) * flashIntensity);
+            ctx.fillStyle = `rgb(255, ${r}, ${r})`;
+        } else {
+            ctx.fillStyle = '#cc2222';
+        }
         ctx.fillRect(x - w/2, y - h/6, w/4, h/3);
         ctx.fillRect(x + w/4, y - h/6, w/4, h/3);
         
-        // Central core (darker)
+        // Central core (darker, with flash)
         ctx.shadowBlur = 0;
-        ctx.fillStyle = '#aa0000';
+        if (flashIntensity > 0) {
+            const r = Math.floor(170 + (255 - 170) * flashIntensity);
+            ctx.fillStyle = `rgb(255, ${r}, ${r})`;
+        } else {
+            ctx.fillStyle = '#aa0000';
+        }
         ctx.beginPath();
         ctx.ellipse(x, y, w/3, h/3, 0, 0, Math.PI * 2);
         ctx.fill();
