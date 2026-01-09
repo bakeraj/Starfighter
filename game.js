@@ -541,7 +541,9 @@ function updateEngineTrails() {
     const speed = Math.hypot(player.vx, player.vy);
     const speedFactor = Math.min(speed / player.maxSpeed, 1.6);
     // Calculate horizontal offset based on player's horizontal velocity
-    const horizontalOffset = player.vx * (1.5 + speedFactor * 1.2); // Slight shift based on movement direction
+    const rawOffset = player.vx * (1.2 + speedFactor * 0.6); // Slight shift based on movement direction
+    const maxOffset = player.width * 0.15;
+    const horizontalOffset = Math.max(-maxOffset, Math.min(maxOffset, rawOffset));
     const trailLife = 12 + speedFactor * 12;
     const trailVy = 1.4 + speedFactor * 1.6;
     const trailSegments = 1 + Math.floor(speedFactor * 1.2);
