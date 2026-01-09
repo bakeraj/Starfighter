@@ -697,16 +697,17 @@ function drawEngineTrails(targetCtx = ctx) {
     };
 
     drawCtx.save();
-    drawCtx.globalAlpha = 0.2 + speedFactor * 0.18; // Less prominent
+    drawCtx.globalAlpha = 0.28 + speedFactor * 0.2; // Less prominent
     
     for (let i = 0; i < engineTrails.length - 1; i++) {
         const trail = engineTrails[i];
         const nextTrail = engineTrails[i + 1];
         const lifeRatio = trail.life / (trail.maxLife || 20);
         const baseFactor = i / (engineTrails.length - 1);
-        const baseBoost = 0.45 + baseFactor * 1.05;
-        const alpha = Math.pow(lifeRatio, 1.8) * (0.35 + speedFactor * 0.25);
-        const width = (3.2 + speedFactor * 3.2) * alpha * baseBoost;
+        const baseBoost = 0.6 + baseFactor * 1.2;
+        const baseAlphaBoost = 0.55 + baseFactor * 0.9;
+        const alpha = Math.pow(lifeRatio, 1.4) * (0.45 + speedFactor * 0.3) * baseAlphaBoost;
+        const width = (3.8 + speedFactor * 3.6) * baseBoost;
         
         const gradient = drawCtx.createLinearGradient(trail.x, trail.y, nextTrail.x, nextTrail.y);
         gradient.addColorStop(0, `rgba(${flameColor.r}, ${flameColor.g}, ${flameColor.b}, ${alpha * 0.6})`);
