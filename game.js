@@ -703,9 +703,9 @@ function drawEngineTrails(targetCtx = ctx) {
         const trail = engineTrails[i];
         const nextTrail = engineTrails[i + 1];
         const lifeRatio = trail.life / (trail.maxLife || 20);
-        const headFactor = 1 - i / (engineTrails.length - 1);
-        const baseBoost = 0.6 + headFactor * 0.8;
-        const alpha = Math.pow(lifeRatio, 1.6) * (0.35 + speedFactor * 0.25);
+        const baseFactor = i / (engineTrails.length - 1);
+        const baseBoost = 0.45 + baseFactor * 1.05;
+        const alpha = Math.pow(lifeRatio, 1.8) * (0.35 + speedFactor * 0.25);
         const width = (3.2 + speedFactor * 3.2) * alpha * baseBoost;
         
         const gradient = drawCtx.createLinearGradient(trail.x, trail.y, nextTrail.x, nextTrail.y);
