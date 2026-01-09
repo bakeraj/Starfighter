@@ -9,6 +9,11 @@ canvas.height = logicalHeight * dpr;
 canvas.style.width = `${logicalWidth}px`;
 canvas.style.height = `${logicalHeight}px`;
 ctx.scale(dpr, dpr);
+const glowCanvas = document.createElement('canvas');
+const glowCtx = glowCanvas.getContext('2d');
+glowCanvas.width = logicalWidth * dpr;
+glowCanvas.height = logicalHeight * dpr;
+glowCtx.scale(dpr, dpr);
 
 // Game state
 let gameState = 'start'; // 'start', 'playing', 'gameOver'
@@ -657,11 +662,12 @@ function drawStars() {
 }
 
 // Draw engine trails
-function drawEngineTrails() {
+function drawEngineTrails(targetCtx = ctx) {
     if (engineTrails.length < 2) return;
     
-    ctx.save();
-    ctx.globalAlpha = 0.3; // Less prominent
+    const drawCtx = targetCtx;
+    drawCtx.save();
+    drawCtx.globalAlpha = 0.3; // Less prominent
     
     for (let i = 0; i < engineTrails.length - 1; i++) {
         const trail = engineTrails[i];
@@ -669,20 +675,56 @@ function drawEngineTrails() {
         const alpha = trail.life / 20;
         const width = 5 * alpha; // Thinner trail
         
-        const gradient = ctx.createLinearGradient(trail.x, trail.y, nextTrail.x, nextTrail.y);
+        const gradient = drawCtx.createLinearGradient(trail.x, trail.y, nextTrail.x, nextTrail.y);
         gradient.addColorStop(0, `rgba(255, 102, 0, ${alpha * 0.5})`);
         gradient.addColorStop(1, `rgba(255, 170, 0, ${alpha * 0.2})`);
         
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = width;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(trail.x, trail.y);
-        ctx.lineTo(nextTrail.x, nextTrail.y);
-        ctx.stroke();
+        drawCtx.strokeStyle = gradient;
+        drawCtx.lineWidth = width;
+        drawCtx.lineCap = 'round';
+        drawCtx.beginPath();
+        drawCtx.moveTo(trail.x, trail.y);
+        drawCtx.lineTo(nextTrail.x, nextTrail.y);
+        drawCtx.stroke();
     }
     
-    ctx.restore();
+    drawCtx.restore();
+}
+
+function drawPlayerEngineGlow(targetCtx = ctx) {
+    const drawCtx = targetCtx;
+    const x = player.x;
+    const y = player.y;
+    const w = player.width;
+    const h = player.height;
+
+    // Engine glow (rear of body) - orange/red with pulsing animation
+    const enginePulse = 0.7 + Math.sin(playerAnimationTime * 2) * 0.3;
+    const engineGlowPulse = 15 + Math.sin(playerAnimationTime * 2.5) * 8;
+    drawCtx.shadowBlur = engineGlowPulse;
+    drawCtx.shadowColor = `rgba(255, 102, 0, ${0.7 + enginePulse * 0.3})`;
+    drawCtx.fillStyle = `rgba(255, 68, 0, ${enginePulse})`;
+    drawCtx.fillRect(x - w / 10, y + h / 2 - 2, w / 5, 4);
+
+    // Additional engine detail - bright orange core with pulsing
+    const corePulse = 0.8 + Math.sin(playerAnimationTime * 3) * 0.2;
+    drawCtx.shadowBlur = 8 + Math.sin(playerAnimationTime * 3.5) * 4;
+    drawCtx.shadowColor = `rgba(255, 170, 0, ${0.8 + corePulse * 0.2})`;
+    drawCtx.fillStyle = `rgba(255, 170, 0, ${corePulse})`;
+    drawCtx.fillRect(x - w / 12, y + h / 2 - 1, w / 6, 2);
+
+    // Add extra engine particles/glow
+    for (let i = 0; i < 2; i++) {
+        const particleOffset = (playerAnimationTime * 0.5 + i * 0.5) % 1;
+        const particleY = y + h / 2 + particleOffset * 3;
+        const particleSize = 2 * (1 - particleOffset) * (0.5 + Math.sin(playerAnimationTime * 4 + i) * 0.3);
+        drawCtx.shadowBlur = 6;
+        drawCtx.shadowColor = `rgba(255, 102, 0, ${0.6 * (1 - particleOffset)})`;
+        drawCtx.fillStyle = `rgba(255, 170, 0, ${0.5 * (1 - particleOffset)})`;
+        drawCtx.beginPath();
+        drawCtx.arc(x, particleY, particleSize, 0, Math.PI * 2);
+        drawCtx.fill();
+    }
 }
 
 function drawPlayer() {
@@ -770,38 +812,14 @@ function drawPlayer() {
     ctx.arc(x + w/2 * rightScale, y, 3 * rightScale, 0, Math.PI * 2);
     ctx.fill();
     
-    // Engine glow (rear of body) - orange/red with pulsing animation
-    const enginePulse = 0.7 + Math.sin(playerAnimationTime * 2) * 0.3;
-    const engineGlowPulse = 15 + Math.sin(playerAnimationTime * 2.5) * 8;
-    ctx.shadowBlur = engineGlowPulse;
-    ctx.shadowColor = `rgba(255, 102, 0, ${0.7 + enginePulse * 0.3})`;
-    ctx.fillStyle = `rgba(255, 68, 0, ${enginePulse})`;
-    ctx.fillRect(x - w/10, y + h/2 - 2, w/5, 4);
-    
-    // Additional engine detail - bright orange core with pulsing
-    const corePulse = 0.8 + Math.sin(playerAnimationTime * 3) * 0.2;
-    ctx.shadowBlur = 8 + Math.sin(playerAnimationTime * 3.5) * 4;
-    ctx.shadowColor = `rgba(255, 170, 0, ${0.8 + corePulse * 0.2})`;
-    ctx.fillStyle = `rgba(255, 170, 0, ${corePulse})`;
-    ctx.fillRect(x - w/12, y + h/2 - 1, w/6, 2);
-    
-    // Add extra engine particles/glow
-    for (let i = 0; i < 2; i++) {
-        const particleOffset = (playerAnimationTime * 0.5 + i * 0.5) % 1;
-        const particleY = y + h/2 + particleOffset * 3;
-        const particleSize = 2 * (1 - particleOffset) * (0.5 + Math.sin(playerAnimationTime * 4 + i) * 0.3);
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = `rgba(255, 102, 0, ${0.6 * (1 - particleOffset)})`;
-        ctx.fillStyle = `rgba(255, 170, 0, ${0.5 * (1 - particleOffset)})`;
-        ctx.beginPath();
-        ctx.arc(x, particleY, particleSize, 0, Math.PI * 2);
-        ctx.fill();
-    }
+    drawPlayerEngineGlow(ctx);
     
     ctx.restore();
 }
 
-function drawBullets() {
+function drawBullets(targetCtx = ctx) {
+    const drawCtx = targetCtx;
+
     for (let bullet of bullets) {
         const x = bullet.x;
         const y = bullet.y;
@@ -815,7 +833,7 @@ function drawBullets() {
         const corePulse = 0.5 + Math.sin(time * 3) * 0.2; // Core brightness pulses
         
         // Create enhanced gradient for laser effect with pulsing
-        const gradient = ctx.createLinearGradient(x, y, x, y + h);
+        const gradient = drawCtx.createLinearGradient(x, y, x, y + h);
         const brightness = 1 + pulseIntensity;
         gradient.addColorStop(0, `rgba(255, 255, 255, ${brightness})`); // Bright white at top
         gradient.addColorStop(0.2, `rgba(255, 255, 136, ${brightness * 0.9})`); // Bright yellow
@@ -825,47 +843,47 @@ function drawBullets() {
         gradient.addColorStop(1, `rgba(255, 68, 0, ${brightness * 0.5})`); // Dark orange at bottom
         
         // Draw outer glow with pulsing intensity
-        ctx.shadowBlur = 15 + glowPulse;
-        ctx.shadowColor = `rgba(255, 255, 0, ${0.6 + pulseIntensity})`;
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x - w / 2, y, w, h);
+        drawCtx.shadowBlur = 15 + glowPulse;
+        drawCtx.shadowColor = `rgba(255, 255, 0, ${0.6 + pulseIntensity})`;
+        drawCtx.fillStyle = gradient;
+        drawCtx.fillRect(x - w / 2, y, w, h);
         
         // Draw middle layer with pulsing
-        ctx.shadowBlur = 8 + glowPulse * 0.6;
-        ctx.shadowColor = `rgba(255, 255, 136, ${0.7 + pulseIntensity})`;
-        ctx.fillStyle = `rgba(255, 255, 136, ${0.8 + pulseIntensity})`;
-        ctx.fillRect(x - w / 3, y, w * 2 / 3, h);
+        drawCtx.shadowBlur = 8 + glowPulse * 0.6;
+        drawCtx.shadowColor = `rgba(255, 255, 136, ${0.7 + pulseIntensity})`;
+        drawCtx.fillStyle = `rgba(255, 255, 136, ${0.8 + pulseIntensity})`;
+        drawCtx.fillRect(x - w / 3, y, w * 2 / 3, h);
         
         // Draw bright white core with pulsing
-        ctx.shadowBlur = 6 + glowPulse * 0.4;
-        ctx.shadowColor = `rgba(255, 255, 255, ${0.8 + pulseIntensity})`;
-        ctx.fillStyle = `rgba(255, 255, 255, ${corePulse})`;
-        ctx.fillRect(x - w / 4, y, w / 2, h);
+        drawCtx.shadowBlur = 6 + glowPulse * 0.4;
+        drawCtx.shadowColor = `rgba(255, 255, 255, ${0.8 + pulseIntensity})`;
+        drawCtx.fillStyle = `rgba(255, 255, 255, ${corePulse})`;
+        drawCtx.fillRect(x - w / 4, y, w / 2, h);
         
         // Add animated energy pulse effect at the tip
         const tipSize = (w / 2) * (1 + Math.sin(time * 4) * 0.3);
-        ctx.shadowBlur = 10 + Math.sin(time * 3) * 8;
-        ctx.shadowColor = `rgba(255, 255, 255, ${0.9 + pulseIntensity})`;
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.7 + pulseIntensity})`;
-        ctx.beginPath();
-        ctx.arc(x, y, tipSize, 0, Math.PI * 2);
-        ctx.fill();
+        drawCtx.shadowBlur = 10 + Math.sin(time * 3) * 8;
+        drawCtx.shadowColor = `rgba(255, 255, 255, ${0.9 + pulseIntensity})`;
+        drawCtx.fillStyle = `rgba(255, 255, 255, ${0.7 + pulseIntensity})`;
+        drawCtx.beginPath();
+        drawCtx.arc(x, y, tipSize, 0, Math.PI * 2);
+        drawCtx.fill();
         
         // Add trailing energy particles (optional sci-fi effect)
         for (let i = 0; i < 3; i++) {
             const offset = (time * 2 + i) % 1;
             const particleY = y + h * offset;
             const particleSize = (w / 4) * (1 - offset) * (0.5 + Math.sin(time * 5 + i) * 0.3);
-            ctx.shadowBlur = 5;
-            ctx.shadowColor = `rgba(255, 255, 0, ${0.5 * (1 - offset)})`;
-            ctx.fillStyle = `rgba(255, 255, 136, ${0.4 * (1 - offset)})`;
-            ctx.beginPath();
-            ctx.arc(x, particleY, particleSize, 0, Math.PI * 2);
-            ctx.fill();
+            drawCtx.shadowBlur = 5;
+            drawCtx.shadowColor = `rgba(255, 255, 0, ${0.5 * (1 - offset)})`;
+            drawCtx.fillStyle = `rgba(255, 255, 136, ${0.4 * (1 - offset)})`;
+            drawCtx.beginPath();
+            drawCtx.arc(x, particleY, particleSize, 0, Math.PI * 2);
+            drawCtx.fill();
         }
         
         // Reset shadow
-        ctx.shadowBlur = 0;
+        drawCtx.shadowBlur = 0;
     }
 }
 
@@ -946,7 +964,9 @@ function drawEnemies() {
     }
 }
 
-function drawTorpedoes() {
+function drawTorpedoes(targetCtx = ctx) {
+    const drawCtx = targetCtx;
+
     for (let torpedo of torpedoes) {
         if (!torpedo.exploded) {
             const x = torpedo.x;
@@ -956,55 +976,55 @@ function drawTorpedoes() {
             
             // Draw trail
             if (torpedo.trail && torpedo.trail.length > 1) {
-                ctx.save();
-                ctx.globalAlpha = 0.5;
+                drawCtx.save();
+                drawCtx.globalAlpha = 0.5;
                 for (let i = 0; i < torpedo.trail.length - 1; i++) {
                     const point = torpedo.trail[i];
                     const nextPoint = torpedo.trail[i + 1];
                     const alpha = i / torpedo.trail.length;
                     const width = 6 * alpha;
                     
-                    const gradient = ctx.createLinearGradient(point.x, point.y, nextPoint.x, nextPoint.y);
+                    const gradient = drawCtx.createLinearGradient(point.x, point.y, nextPoint.x, nextPoint.y);
                     gradient.addColorStop(0, `rgba(0, 255, 0, ${alpha * 0.6})`);
                     gradient.addColorStop(1, `rgba(0, 255, 150, ${alpha * 0.3})`);
                     
-                    ctx.strokeStyle = gradient;
-                    ctx.lineWidth = width;
-                    ctx.lineCap = 'round';
-                    ctx.beginPath();
-                    ctx.moveTo(point.x, point.y);
-                    ctx.lineTo(nextPoint.x, nextPoint.y);
-                    ctx.stroke();
+                    drawCtx.strokeStyle = gradient;
+                    drawCtx.lineWidth = width;
+                    drawCtx.lineCap = 'round';
+                    drawCtx.beginPath();
+                    drawCtx.moveTo(point.x, point.y);
+                    drawCtx.lineTo(nextPoint.x, nextPoint.y);
+                    drawCtx.stroke();
                 }
-                ctx.restore();
+                drawCtx.restore();
             }
             
             // Draw torpedo body with enhanced glow
-            const gradient = ctx.createLinearGradient(x, y, x, y + h);
+            const gradient = drawCtx.createLinearGradient(x, y, x, y + h);
             gradient.addColorStop(0, '#ffffff');
             gradient.addColorStop(0.3, '#00ff88');
             gradient.addColorStop(1, '#00aa44');
             
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = '#00ff00';
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x - w/2, y + h);
-            ctx.lineTo(x + w/2, y + h);
-            ctx.closePath();
-            ctx.fill();
+            drawCtx.shadowBlur = 15;
+            drawCtx.shadowColor = '#00ff00';
+            drawCtx.fillStyle = gradient;
+            drawCtx.beginPath();
+            drawCtx.moveTo(x, y);
+            drawCtx.lineTo(x - w / 2, y + h);
+            drawCtx.lineTo(x + w / 2, y + h);
+            drawCtx.closePath();
+            drawCtx.fill();
             
             // Draw bright tip with pulsing
             const tipPulse = 1 + Math.sin(torpedo.time * 0.3) * 0.2;
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#ffffff';
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(x, y, (w/3) * tipPulse, 0, Math.PI * 2);
-            ctx.fill();
+            drawCtx.shadowBlur = 20;
+            drawCtx.shadowColor = '#ffffff';
+            drawCtx.fillStyle = '#ffffff';
+            drawCtx.beginPath();
+            drawCtx.arc(x, y, (w / 3) * tipPulse, 0, Math.PI * 2);
+            drawCtx.fill();
             
-            ctx.shadowBlur = 0;
+            drawCtx.shadowBlur = 0;
         }
     }
     
@@ -1015,51 +1035,51 @@ function drawTorpedoes() {
         const radius = explosion.radius;
         
         // Shockwave ring
-        ctx.globalAlpha = alpha * 0.3;
-        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(explosion.x, explosion.y, radius * 0.9, 0, Math.PI * 2);
-        ctx.stroke();
+        drawCtx.globalAlpha = alpha * 0.3;
+        drawCtx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
+        drawCtx.lineWidth = 3;
+        drawCtx.beginPath();
+        drawCtx.arc(explosion.x, explosion.y, radius * 0.9, 0, Math.PI * 2);
+        drawCtx.stroke();
         
         // Outer explosion ring
-        ctx.globalAlpha = alpha * 0.7;
-        ctx.shadowBlur = 30;
-        ctx.shadowColor = '#ff6600';
-        ctx.fillStyle = '#ff4400';
-        ctx.beginPath();
-        ctx.arc(explosion.x, explosion.y, radius, 0, Math.PI * 2);
-        ctx.fill();
+        drawCtx.globalAlpha = alpha * 0.7;
+        drawCtx.shadowBlur = 30;
+        drawCtx.shadowColor = '#ff6600';
+        drawCtx.fillStyle = '#ff4400';
+        drawCtx.beginPath();
+        drawCtx.arc(explosion.x, explosion.y, radius, 0, Math.PI * 2);
+        drawCtx.fill();
         
         // Middle ring
-        ctx.globalAlpha = alpha * 0.9;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = '#ffaa00';
-        ctx.fillStyle = '#ff8800';
-        ctx.beginPath();
-        ctx.arc(explosion.x, explosion.y, radius * 0.7, 0, Math.PI * 2);
-        ctx.fill();
+        drawCtx.globalAlpha = alpha * 0.9;
+        drawCtx.shadowBlur = 20;
+        drawCtx.shadowColor = '#ffaa00';
+        drawCtx.fillStyle = '#ff8800';
+        drawCtx.beginPath();
+        drawCtx.arc(explosion.x, explosion.y, radius * 0.7, 0, Math.PI * 2);
+        drawCtx.fill();
         
         // Inner bright ring
-        ctx.globalAlpha = alpha;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#ffff00';
-        ctx.fillStyle = '#ffff88';
-        ctx.beginPath();
-        ctx.arc(explosion.x, explosion.y, radius * 0.5, 0, Math.PI * 2);
-        ctx.fill();
+        drawCtx.globalAlpha = alpha;
+        drawCtx.shadowBlur = 15;
+        drawCtx.shadowColor = '#ffff00';
+        drawCtx.fillStyle = '#ffff88';
+        drawCtx.beginPath();
+        drawCtx.arc(explosion.x, explosion.y, radius * 0.5, 0, Math.PI * 2);
+        drawCtx.fill();
         
         // Bright white core
-        ctx.globalAlpha = alpha;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#ffffff';
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(explosion.x, explosion.y, radius * 0.3, 0, Math.PI * 2);
-        ctx.fill();
+        drawCtx.globalAlpha = alpha;
+        drawCtx.shadowBlur = 10;
+        drawCtx.shadowColor = '#ffffff';
+        drawCtx.fillStyle = '#ffffff';
+        drawCtx.beginPath();
+        drawCtx.arc(explosion.x, explosion.y, radius * 0.3, 0, Math.PI * 2);
+        drawCtx.fill();
         
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 1;
+        drawCtx.shadowBlur = 0;
+        drawCtx.globalAlpha = 1;
     }
 }
 
@@ -1081,6 +1101,20 @@ function drawParticles() {
         ctx.shadowBlur = 0;
         ctx.globalAlpha = 1;
     }
+}
+
+function renderGlowPass() {
+    glowCtx.clearRect(0, 0, logicalWidth, logicalHeight);
+    drawEngineTrails(glowCtx);
+    drawBullets(glowCtx);
+    drawTorpedoes(glowCtx);
+    drawPlayerEngineGlow(glowCtx);
+
+    ctx.save();
+    ctx.filter = 'blur(6px)';
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.drawImage(glowCanvas, 0, 0, logicalWidth, logicalHeight);
+    ctx.restore();
 }
 
 // Update HUD
@@ -1161,6 +1195,7 @@ function gameLoop() {
     drawEnemies();
     drawPlayer();
     drawParticles();
+    renderGlowPass();
 
     requestAnimationFrame(gameLoop);
 }
