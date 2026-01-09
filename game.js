@@ -636,16 +636,32 @@ function updateDust() {
 
 // Update engine trails
 function updateEngineTrails() {
+    const speed = Math.hypot(player.vx, player.vy);
+    const speedFactor = Math.min(speed / player.maxSpeed, 1.6);
     // Calculate horizontal offset based on player's horizontal velocity
-    const horizontalOffset = player.vx * 2; // Slight shift based on movement direction
+    const rawOffset = player.vx * (0.8 + speedFactor * 0.4); // Slight shift based on movement direction
+    const maxOffset = player.width * 0.15;
+    const horizontalOffset = Math.max(-maxOffset, Math.min(maxOffset, rawOffset));
+    const trailLife = 7 + speedFactor * 5;
+    const trailVy = 1 + speedFactor * 1.1;
+    const trailSegments = 1 + Math.floor(speedFactor);
+    const trailX = player.x + horizontalOffset;
+    const trailY = player.y + player.height / 2 - 3;
     
     // Add new trail point at player's engine position with horizontal offset
-    engineTrails.push({
-        x: player.x + horizontalOffset,
-        y: player.y + player.height / 2,
-        life: 20,
-        vy: 2 // Trail moves downward
-    });
+    const lastTrail = engineTrails[engineTrails.length - 1];
+    const startX = lastTrail ? lastTrail.x : trailX;
+    const startY = lastTrail ? lastTrail.y : trailY;
+    for (let i = 1; i <= trailSegments; i++) {
+        const t = i / trailSegments;
+        engineTrails.push({
+            x: startX + (trailX - startX) * t,
+            y: startY + (trailY - startY) * t,
+            life: trailLife,
+            maxLife: trailLife,
+            vy: trailVy // Trail moves downward
+        });
+    }
     
     // Update and remove old trails (move them downward)
     for (let i = engineTrails.length - 1; i >= 0; i--) {
@@ -657,7 +673,8 @@ function updateEngineTrails() {
     }
     
     // Limit trail length
-    if (engineTrails.length > 10) {
+    const maxTrails = 5 + Math.round(speedFactor * 5);
+    while (engineTrails.length > maxTrails) {
         engineTrails.shift();
     }
 }
@@ -794,18 +811,33 @@ function drawEngineTrails(targetCtx = ctx) {
     if (engineTrails.length < 2) return;
     
     const drawCtx = targetCtx;
+    const speed = Math.hypot(player.vx, player.vy);
+    const speedFactor = Math.min(speed / player.maxSpeed, 1.6);
+    const colorShift = Math.min(speedFactor / 1.4, 1);
+    const startColor = { r: 120, g: 210, b: 255 };
+    const endColor = { r: 210, g: 245, b: 255 };
+    const flameColor = {
+        r: Math.round(startColor.r + (endColor.r - startColor.r) * colorShift),
+        g: Math.round(startColor.g + (endColor.g - startColor.g) * colorShift),
+        b: Math.round(startColor.b + (endColor.b - startColor.b) * colorShift)
+    };
+
     drawCtx.save();
-    drawCtx.globalAlpha = 0.3; // Less prominent
+    drawCtx.globalAlpha = 0.28 + speedFactor * 0.2; // Less prominent
     
     for (let i = 0; i < engineTrails.length - 1; i++) {
         const trail = engineTrails[i];
         const nextTrail = engineTrails[i + 1];
-        const alpha = trail.life / 20;
-        const width = 5 * alpha; // Thinner trail
+        const lifeRatio = trail.life / (trail.maxLife || 20);
+        const baseFactor = i / (engineTrails.length - 1);
+        const baseBoost = 0.6 + baseFactor * 1.2;
+        const baseAlphaBoost = 0.55 + baseFactor * 0.9;
+        const alpha = Math.pow(lifeRatio, 1.4) * (0.45 + speedFactor * 0.3) * baseAlphaBoost;
+        const width = (3.8 + speedFactor * 3.6) * baseBoost;
         
         const gradient = drawCtx.createLinearGradient(trail.x, trail.y, nextTrail.x, nextTrail.y);
-        gradient.addColorStop(0, `rgba(255, 102, 0, ${alpha * 0.5})`);
-        gradient.addColorStop(1, `rgba(255, 170, 0, ${alpha * 0.2})`);
+        gradient.addColorStop(0, `rgba(${flameColor.r}, ${flameColor.g}, ${flameColor.b}, ${alpha * 0.7})`);
+        gradient.addColorStop(1, `rgba(170, 225, 255, ${alpha * 0.18})`);
         
         drawCtx.strokeStyle = gradient;
         drawCtx.lineWidth = width;
