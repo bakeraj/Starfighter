@@ -1,8 +1,14 @@
 // Canvas setup
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-canvas.width = 800;
-canvas.height = 600;
+const logicalWidth = 800;
+const logicalHeight = 600;
+const dpr = window.devicePixelRatio || 1;
+canvas.width = logicalWidth * dpr;
+canvas.height = logicalHeight * dpr;
+canvas.style.width = `${logicalWidth}px`;
+canvas.style.height = `${logicalHeight}px`;
+ctx.scale(dpr, dpr);
 
 // Game state
 let gameState = 'start'; // 'start', 'playing', 'gameOver'
@@ -20,8 +26,8 @@ const TORPEDO_EXPLOSION_RADIUS = 100; // Damage radius
 
 // Player object
 const player = {
-    x: canvas.width / 2,
-    y: canvas.height - 80,
+    x: logicalWidth / 2,
+    y: logicalHeight - 80,
     width: 40,
     height: 50,
     vx: 0, // velocity x
@@ -63,8 +69,8 @@ function initStars() {
     for (let i = 0; i < 150; i++) {
         const starTypes = ['white', 'blue', 'yellow', 'orange'];
         stars.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
+            x: Math.random() * logicalWidth,
+            y: Math.random() * logicalHeight,
             size: Math.random() * 2.5 + 0.5,
             speed: Math.random() * 2 + 1,
             color: starTypes[Math.floor(Math.random() * starTypes.length)],
@@ -77,8 +83,8 @@ function initStars() {
     nebulaClouds = [];
     for (let i = 0; i < 3; i++) {
         nebulaClouds.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
+            x: Math.random() * logicalWidth,
+            y: Math.random() * logicalHeight,
             radius: Math.random() * 200 + 150,
             opacity: Math.random() * 0.1 + 0.05,
             color: ['#1a1a3e', '#2a1a4e', '#1a2a4e'][Math.floor(Math.random() * 3)]
@@ -125,7 +131,7 @@ function createEnemy() {
     const horizontalSpeed = (Math.random() - 0.5) * 3; // Random horizontal speed (-1.5 to 1.5)
     const health = Math.floor(Math.random() * 6) + 5; // 5-10 health points
     enemies.push({
-        x: Math.random() * (canvas.width - 40),
+        x: Math.random() * (logicalWidth - 40),
         y: -40,
         width: 40,
         height: 40,
@@ -216,16 +222,16 @@ function updatePlayer() {
         player.x = player.width / 2;
         player.vx = 0;
     }
-    if (player.x + player.width / 2 > canvas.width) {
-        player.x = canvas.width - player.width / 2;
+    if (player.x + player.width / 2 > logicalWidth) {
+        player.x = logicalWidth - player.width / 2;
         player.vx = 0;
     }
     if (player.y - player.height / 2 < 0) {
         player.y = player.height / 2;
         player.vy = 0;
     }
-    if (player.y + player.height / 2 > canvas.height) {
-        player.y = canvas.height - player.height / 2;
+    if (player.y + player.height / 2 > logicalHeight) {
+        player.y = logicalHeight - player.height / 2;
         player.vy = 0;
     }
 }
@@ -415,14 +421,14 @@ function updateEnemies() {
         enemy.y += enemy.vy;
         
         // Bounce off horizontal edges
-        if (enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) {
+        if (enemy.x <= 0 || enemy.x + enemy.width >= logicalWidth) {
             enemy.vx = -enemy.vx; // Reverse horizontal direction
             // Keep enemy in bounds
-            enemy.x = Math.max(0, Math.min(canvas.width - enemy.width, enemy.x));
+            enemy.x = Math.max(0, Math.min(logicalWidth - enemy.width, enemy.x));
         }
         
         // Remove enemies that are off screen (bottom or sides)
-        if (enemy.y > canvas.height || enemy.x + enemy.width < 0 || enemy.x > canvas.width) {
+        if (enemy.y > logicalHeight || enemy.x + enemy.width < 0 || enemy.x > logicalWidth) {
             enemies.splice(i, 1);
         }
     }
@@ -450,9 +456,9 @@ function updateStars() {
     for (let star of stars) {
         star.y += star.speed;
         star.twinkle += star.twinkleSpeed;
-        if (star.y > canvas.height) {
+        if (star.y > logicalHeight) {
             star.y = 0;
-            star.x = Math.random() * canvas.width;
+            star.x = Math.random() * logicalWidth;
         }
     }
 }
@@ -474,7 +480,7 @@ function updateEngineTrails() {
     for (let i = engineTrails.length - 1; i >= 0; i--) {
         engineTrails[i].y += engineTrails[i].vy;
         engineTrails[i].life--;
-        if (engineTrails[i].life <= 0 || engineTrails[i].y > canvas.height) {
+        if (engineTrails[i].life <= 0 || engineTrails[i].y > logicalHeight) {
             engineTrails.splice(i, 1);
         }
     }
@@ -1047,8 +1053,8 @@ function gameOver() {
 }
 
 function resetGame() {
-    player.x = canvas.width / 2;
-    player.y = canvas.height - 80;
+    player.x = logicalWidth / 2;
+    player.y = logicalHeight - 80;
     player.vx = 0;
     player.vy = 0;
     startGame();
@@ -1064,7 +1070,7 @@ function gameLoop() {
 
     // Clear canvas
     ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, logicalWidth, logicalHeight);
 
     // Update animation time for player ship effects
     playerAnimationTime += 0.15;
@@ -1095,4 +1101,3 @@ function gameLoop() {
 // Initialize
 initStars();
 drawStars();
-
