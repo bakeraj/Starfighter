@@ -56,7 +56,7 @@ body {
 }
 
 .score.score-pulse {
-    animation: score-glow 0.7s ease-out;
+    animation: score-glow 0.45s ease-out;
 }
 
 
@@ -64,11 +64,6 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-}
-
-.life-symbol {
-    font-size: 18px;
-    filter: drop-shadow(0 0 6px rgba(122, 182, 255, 0.7));
 }
 
 .lives-icons {
