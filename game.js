@@ -46,7 +46,7 @@ let stars = [];
 let torpedoes = [];
 let explosions = []; // For torpedo explosions
 let engineTrails = []; // For player ship engine trails
-let nebulaClouds = []; // Background nebula effects
+let nebulaTexture = null; // Offscreen nebula texture
 
 // Input handling
 const keys = {};
@@ -65,31 +65,91 @@ document.addEventListener('keyup', (e) => {
 
 // Initialize stars for background
 function initStars() {
-    stars = [];
-    for (let i = 0; i < 150; i++) {
-        const starTypes = ['white', 'blue', 'yellow', 'orange'];
-        stars.push({
-            x: Math.random() * logicalWidth,
-            y: Math.random() * logicalHeight,
-            size: Math.random() * 2.5 + 0.5,
-            speed: Math.random() * 2 + 1,
-            color: starTypes[Math.floor(Math.random() * starTypes.length)],
-            twinkle: Math.random() * Math.PI * 2,
-            twinkleSpeed: Math.random() * 0.1 + 0.05
-        });
+    const starTypes = ['white', 'blue', 'yellow', 'orange'];
+    const layerConfigs = [
+        {
+            name: 'far',
+            count: 60,
+            sizeRange: [0.5, 1.4],
+            speedRange: [0.2, 0.7],
+            baseBrightness: 0.25,
+            twinkleStrength: 0.25,
+            twinkleSpeedRange: [0.01, 0.03]
+        },
+        {
+            name: 'mid',
+            count: 55,
+            sizeRange: [0.9, 2.1],
+            speedRange: [0.7, 1.4],
+            baseBrightness: 0.35,
+            twinkleStrength: 0.35,
+            twinkleSpeedRange: [0.03, 0.06]
+        },
+        {
+            name: 'near',
+            count: 40,
+            sizeRange: [1.5, 3.1],
+            speedRange: [1.4, 2.4],
+            baseBrightness: 0.45,
+            twinkleStrength: 0.45,
+            twinkleSpeedRange: [0.05, 0.1]
+        }
+    ];
+
+    stars = layerConfigs.map((layer) => {
+        const layerStars = [];
+        for (let i = 0; i < layer.count; i++) {
+            layerStars.push({
+                x: Math.random() * logicalWidth,
+                y: Math.random() * logicalHeight,
+                size: Math.random() * (layer.sizeRange[1] - layer.sizeRange[0]) + layer.sizeRange[0],
+                speed: Math.random() * (layer.speedRange[1] - layer.speedRange[0]) + layer.speedRange[0],
+                color: starTypes[Math.floor(Math.random() * starTypes.length)],
+                twinkle: Math.random() * Math.PI * 2,
+                twinkleSpeed: Math.random() * (layer.twinkleSpeedRange[1] - layer.twinkleSpeedRange[0]) + layer.twinkleSpeedRange[0]
+            });
+        }
+        return {
+            name: layer.name,
+            baseBrightness: layer.baseBrightness,
+            twinkleStrength: layer.twinkleStrength,
+            stars: layerStars
+        };
+    });
+
+    const nebulaCanvas = document.createElement('canvas');
+    nebulaCanvas.width = logicalWidth;
+    nebulaCanvas.height = logicalHeight;
+    const nebulaCtx = nebulaCanvas.getContext('2d');
+    nebulaCtx.clearRect(0, 0, logicalWidth, logicalHeight);
+
+    const nebulaColors = [
+        'rgba(60, 50, 120, 0.2)',
+        'rgba(40, 70, 140, 0.18)',
+        'rgba(90, 40, 110, 0.16)'
+    ];
+    for (let i = 0; i < 6; i++) {
+        const x = Math.random() * logicalWidth;
+        const y = Math.random() * logicalHeight;
+        const radius = Math.random() * 220 + 180;
+        const gradient = nebulaCtx.createRadialGradient(x, y, 0, x, y, radius);
+        const color = nebulaColors[Math.floor(Math.random() * nebulaColors.length)];
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        nebulaCtx.fillStyle = gradient;
+        nebulaCtx.beginPath();
+        nebulaCtx.arc(x, y, radius, 0, Math.PI * 2);
+        nebulaCtx.fill();
     }
-    
-    // Initialize nebula clouds
-    nebulaClouds = [];
-    for (let i = 0; i < 3; i++) {
-        nebulaClouds.push({
-            x: Math.random() * logicalWidth,
-            y: Math.random() * logicalHeight,
-            radius: Math.random() * 200 + 150,
-            opacity: Math.random() * 0.1 + 0.05,
-            color: ['#1a1a3e', '#2a1a4e', '#1a2a4e'][Math.floor(Math.random() * 3)]
-        });
-    }
+
+    nebulaTexture = {
+        canvas: nebulaCanvas,
+        offsetX: 0,
+        offsetY: 0,
+        driftX: 0.02,
+        driftY: 0.01,
+        alpha: 0.18
+    };
 }
 
 // Create bullet
@@ -453,13 +513,20 @@ function updateParticles() {
 
 // Update stars
 function updateStars() {
-    for (let star of stars) {
-        star.y += star.speed;
-        star.twinkle += star.twinkleSpeed;
-        if (star.y > logicalHeight) {
-            star.y = 0;
-            star.x = Math.random() * logicalWidth;
+    for (let layer of stars) {
+        for (let star of layer.stars) {
+            star.y += star.speed;
+            star.twinkle += star.twinkleSpeed;
+            if (star.y > logicalHeight) {
+                star.y = 0;
+                star.x = Math.random() * logicalWidth;
+            }
         }
+    }
+
+    if (nebulaTexture) {
+        nebulaTexture.offsetX = (nebulaTexture.offsetX + nebulaTexture.driftX) % logicalWidth;
+        nebulaTexture.offsetY = (nebulaTexture.offsetY + nebulaTexture.driftY) % logicalHeight;
     }
 }
 
@@ -553,38 +620,38 @@ function isColliding(obj1, obj2) {
 
 // Drawing functions
 function drawStars() {
-    // Draw nebula clouds first (background)
-    for (let cloud of nebulaClouds) {
-        const gradient = ctx.createRadialGradient(cloud.x, cloud.y, 0, cloud.x, cloud.y, cloud.radius);
-        gradient.addColorStop(0, cloud.color);
-        gradient.addColorStop(1, 'transparent');
-        ctx.globalAlpha = cloud.opacity;
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(cloud.x, cloud.y, cloud.radius, 0, Math.PI * 2);
-        ctx.fill();
+    if (nebulaTexture) {
+        ctx.save();
+        ctx.globalAlpha = nebulaTexture.alpha;
+        const nebulaX = -nebulaTexture.offsetX;
+        const nebulaY = -nebulaTexture.offsetY;
+        ctx.drawImage(nebulaTexture.canvas, nebulaX, nebulaY);
+        ctx.drawImage(nebulaTexture.canvas, nebulaX + logicalWidth, nebulaY);
+        ctx.drawImage(nebulaTexture.canvas, nebulaX, nebulaY + logicalHeight);
+        ctx.drawImage(nebulaTexture.canvas, nebulaX + logicalWidth, nebulaY + logicalHeight);
+        ctx.restore();
     }
-    ctx.globalAlpha = 1;
-    
-    // Draw stars with twinkling effect (moderately bright)
-    for (let star of stars) {
-        const twinkle = Math.sin(star.twinkle) * 0.5 + 0.5; // 0 to 1
-        const brightness = 0.35 + twinkle * 0.35; // Moderate brightness (0.35-0.7)
-        
-        let color;
-        switch(star.color) {
-            case 'blue': color = `rgba(125, 165, 220, ${brightness * 0.8})`; break;
-            case 'yellow': color = `rgba(220, 220, 125, ${brightness * 0.8})`; break;
-            case 'orange': color = `rgba(220, 165, 85, ${brightness * 0.8})`; break;
-            default: color = `rgba(200, 200, 200, ${brightness * 0.8})`; // Moderately muted white
+
+    for (let layer of stars) {
+        for (let star of layer.stars) {
+            const twinkle = Math.sin(star.twinkle) * 0.5 + 0.5; // 0 to 1
+            const brightness = layer.baseBrightness + twinkle * layer.twinkleStrength;
+            
+            let color;
+            switch(star.color) {
+                case 'blue': color = `rgba(125, 165, 220, ${brightness})`; break;
+                case 'yellow': color = `rgba(220, 220, 125, ${brightness})`; break;
+                case 'orange': color = `rgba(220, 165, 85, ${brightness})`; break;
+                default: color = `rgba(200, 200, 200, ${brightness})`;
+            }
+            
+            ctx.fillStyle = color;
+            ctx.shadowBlur = star.size * 1.4;
+            ctx.shadowColor = color;
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.size * 0.9, 0, Math.PI * 2);
+            ctx.fill();
         }
-        
-        ctx.fillStyle = color;
-        ctx.shadowBlur = star.size * 1.5; // Moderate glow
-        ctx.shadowColor = color;
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size * 0.9, 0, Math.PI * 2); // Slightly smaller stars
-        ctx.fill();
     }
     ctx.shadowBlur = 0;
 }
