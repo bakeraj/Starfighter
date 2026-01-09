@@ -10,7 +10,9 @@
     <div class="game-container">
         <div class="hud">
             <div class="score">Score: <span id="score">0</span></div>
-            <div class="lives">Lives: <span id="lives">3</span></div>
+            <div class="lives" aria-label="Lives">
+                <span id="lives" class="lives-icons"></span>
+            </div>
         </div>
         <canvas id="gameCanvas"></canvas>
         <div id="gameOver" class="game-over hidden">
@@ -29,4 +31,3 @@
     <script src="game.js"></script>
 </body>
 </html>
-

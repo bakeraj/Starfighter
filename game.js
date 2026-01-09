@@ -19,6 +19,7 @@ glowCtx.scale(dpr, dpr);
 let gameState = 'start'; // 'start', 'playing', 'gameOver'
 let score = 0;
 let lives = 3;
+const maxLives = 3;
 let gameSpeed = 1;
 let shootCooldown = 0;
 let shootFromLeft = true; // Alternating between left and right wing
@@ -38,6 +39,14 @@ const MAX_SHAKE_INTENSITY = 4;
 const SHAKE_DECAY = 0.9;
 const IMPACT_FLASH_DURATION = 10;
 const IMPACT_FLASH_RADIUS = 140;
+const scoreElement = document.getElementById('score');
+const scoreHud = document.querySelector('.score');
+const livesElement = document.getElementById('lives');
+const livesHud = document.querySelector('.lives');
+let lastScore = 0;
+let scorePulseTimeout = null;
+let lastLives = lives;
+let livesPulseTimeout = null;
 
 // Player object
 const player = {
@@ -1532,11 +1541,53 @@ function renderGlowPass() {
 
 // Update HUD
 function updateScore() {
-    document.getElementById('score').textContent = score;
+    const delta = score - lastScore;
+    scoreElement.textContent = score;
+
+    if (delta !== 0) {
+        scoreHud.classList.remove('score-pulse');
+        void scoreHud.offsetWidth;
+        scoreHud.classList.add('score-pulse');
+        if (scorePulseTimeout) {
+            clearTimeout(scorePulseTimeout);
+        }
+        scorePulseTimeout = setTimeout(() => {
+            scoreHud.classList.remove('score-pulse');
+        }, 700);
+
+    }
+
+    lastScore = score;
 }
 
 function updateLives() {
-    document.getElementById('lives').textContent = lives;
+    if (lives < lastLives) {
+        livesHud.classList.remove('lives-pulse');
+        void livesHud.offsetWidth;
+        livesHud.classList.add('lives-pulse');
+        if (livesPulseTimeout) {
+            clearTimeout(livesPulseTimeout);
+        }
+        livesPulseTimeout = setTimeout(() => {
+            livesHud.classList.remove('lives-pulse');
+        }, 450);
+    }
+    livesElement.innerHTML = '';
+    for (let i = 0; i < Math.max(lives, 0); i++) {
+        const icon = document.createElement('span');
+        icon.className = 'life-icon';
+        icon.textContent = '❤';
+        livesElement.appendChild(icon);
+    }
+    if (lives === 0) {
+        for (let i = 0; i < maxLives; i++) {
+            const faded = document.createElement('span');
+            faded.className = 'life-icon';
+            faded.textContent = '♡';
+            livesElement.appendChild(faded);
+        }
+    }
+    lastLives = lives;
 }
 
 // Game state functions
@@ -1544,6 +1595,8 @@ function startGame() {
     gameState = 'playing';
     score = 0;
     lives = 3;
+    lastScore = score;
+    lastLives = lives;
     bullets = [];
     enemies = [];
     particles = [];
