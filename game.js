@@ -688,8 +688,8 @@ function drawEngineTrails(targetCtx = ctx) {
     const speed = Math.hypot(player.vx, player.vy);
     const speedFactor = Math.min(speed / player.maxSpeed, 1.6);
     const colorShift = Math.min(speedFactor / 1.4, 1);
-    const startColor = { r: 255, g: 102, b: 0 };
-    const endColor = { r: 255, g: 230, b: 180 };
+    const startColor = { r: 120, g: 210, b: 255 };
+    const endColor = { r: 210, g: 245, b: 255 };
     const flameColor = {
         r: Math.round(startColor.r + (endColor.r - startColor.r) * colorShift),
         g: Math.round(startColor.g + (endColor.g - startColor.g) * colorShift),
@@ -710,8 +710,8 @@ function drawEngineTrails(targetCtx = ctx) {
         const width = (3.8 + speedFactor * 3.6) * baseBoost;
         
         const gradient = drawCtx.createLinearGradient(trail.x, trail.y, nextTrail.x, nextTrail.y);
-        gradient.addColorStop(0, `rgba(${flameColor.r}, ${flameColor.g}, ${flameColor.b}, ${alpha * 0.6})`);
-        gradient.addColorStop(1, `rgba(255, 170, 0, ${alpha * 0.2})`);
+        gradient.addColorStop(0, `rgba(${flameColor.r}, ${flameColor.g}, ${flameColor.b}, ${alpha * 0.7})`);
+        gradient.addColorStop(1, `rgba(170, 225, 255, ${alpha * 0.18})`);
         
         drawCtx.strokeStyle = gradient;
         drawCtx.lineWidth = width;
