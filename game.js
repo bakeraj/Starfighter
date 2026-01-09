@@ -58,6 +58,7 @@ let bullets = [];
 let enemies = [];
 let particles = [];
 let stars = [];
+let dust = [];
 let torpedoes = [];
 let explosions = []; // For torpedo explosions
 let engineTrails = []; // For player ship engine trails
@@ -166,6 +167,52 @@ function initStars() {
         driftY: 0.01,
         alpha: 0.38
     };
+
+    initDust();
+}
+
+function initDust() {
+    const layerConfigs = [
+        {
+            name: 'deep',
+            count: 90,
+            sizeRange: [0.4, 1.2],
+            alphaRange: [0.02, 0.05],
+            speedRange: [0.15, 0.35]
+        },
+        {
+            name: 'mid',
+            count: 70,
+            sizeRange: [0.6, 1.6],
+            alphaRange: [0.03, 0.07],
+            speedRange: [0.3, 0.6]
+        },
+        {
+            name: 'near',
+            count: 50,
+            sizeRange: [0.8, 2.0],
+            alphaRange: [0.04, 0.1],
+            speedRange: [0.5, 0.9]
+        }
+    ];
+
+    dust = layerConfigs.map((layer) => {
+        const particles = [];
+        for (let i = 0; i < layer.count; i++) {
+            particles.push({
+                x: Math.random() * logicalWidth,
+                y: Math.random() * logicalHeight,
+                size: Math.random() * (layer.sizeRange[1] - layer.sizeRange[0]) + layer.sizeRange[0],
+                alpha: Math.random() * (layer.alphaRange[1] - layer.alphaRange[0]) + layer.alphaRange[0],
+                speed: Math.random() * (layer.speedRange[1] - layer.speedRange[0]) + layer.speedRange[0]
+            });
+        }
+        return {
+            name: layer.name,
+            config: layer,
+            particles
+        };
+    });
 }
 
 // Create bullet
@@ -530,6 +577,8 @@ function updateParticles() {
 
 // Update stars
 function updateStars() {
+    updateDust();
+
     for (let layer of stars) {
         for (let star of layer.stars) {
             star.y += star.speed;
@@ -544,6 +593,22 @@ function updateStars() {
     if (nebulaTexture) {
         nebulaTexture.offsetX = (nebulaTexture.offsetX + nebulaTexture.driftX) % logicalWidth;
         nebulaTexture.offsetY = (nebulaTexture.offsetY + nebulaTexture.driftY) % logicalHeight;
+    }
+}
+
+function updateDust() {
+    for (let layer of dust) {
+        const config = layer.config;
+        for (let mote of layer.particles) {
+            mote.y += mote.speed;
+            if (mote.y - mote.size > logicalHeight) {
+                mote.y = -Math.random() * logicalHeight * 0.1;
+                mote.x = Math.random() * logicalWidth;
+                mote.size = Math.random() * (config.sizeRange[1] - config.sizeRange[0]) + config.sizeRange[0];
+                mote.alpha = Math.random() * (config.alphaRange[1] - config.alphaRange[0]) + config.alphaRange[0];
+                mote.speed = Math.random() * (config.speedRange[1] - config.speedRange[0]) + config.speedRange[0];
+            }
+        }
     }
 }
 
@@ -663,6 +728,20 @@ function drawStars() {
         ctx.drawImage(nebulaTexture.canvas, nebulaX + logicalWidth, nebulaY + logicalHeight);
         ctx.restore();
     }
+
+    ctx.save();
+    for (let layer of dust) {
+        for (let mote of layer.particles) {
+            const color = `rgba(200, 210, 230, ${mote.alpha})`;
+            ctx.fillStyle = color;
+            ctx.shadowBlur = mote.size * 6;
+            ctx.shadowColor = color;
+            ctx.beginPath();
+            ctx.arc(mote.x, mote.y, mote.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    ctx.restore();
 
     for (let layer of stars) {
         for (let star of layer.stars) {
