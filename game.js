@@ -31,9 +31,13 @@ const TORPEDO_EXPLOSION_RADIUS = 100; // Damage radius
 let cameraShakeTime = 0;
 let cameraShakeIntensity = 0;
 let impactFlashTime = 0;
+let impactFlashX = 0;
+let impactFlashY = 0;
+let impactFlashRadius = 0;
 const MAX_SHAKE_INTENSITY = 4;
 const SHAKE_DECAY = 0.9;
 const IMPACT_FLASH_DURATION = 10;
+const IMPACT_FLASH_RADIUS = 140;
 
 // Player object
 const player = {
@@ -423,7 +427,7 @@ function updateTorpedoes() {
                     time: 0,
                     maxTime: 20
                 });
-                triggerImpact(2.8, 8);
+                triggerImpact(2.8, 8, torpedo.x, torpedo.y);
                 
                 // Damage enemies in radius
                 for (let j = enemies.length - 1; j >= 0; j--) {
@@ -571,13 +575,16 @@ function updateEngineTrails() {
     }
 }
 
-function triggerImpact(shakeIntensity, flashDuration = IMPACT_FLASH_DURATION) {
+function triggerImpact(shakeIntensity, flashDuration = IMPACT_FLASH_DURATION, flashX = player.x, flashY = player.y) {
     cameraShakeTime = Math.max(cameraShakeTime, flashDuration);
     cameraShakeIntensity = Math.min(
         MAX_SHAKE_INTENSITY,
         Math.max(cameraShakeIntensity, shakeIntensity)
     );
     impactFlashTime = Math.max(impactFlashTime, flashDuration);
+    impactFlashX = flashX;
+    impactFlashY = flashY;
+    impactFlashRadius = IMPACT_FLASH_RADIUS;
 }
 
 // Collision detection
@@ -593,7 +600,7 @@ function checkCollisions() {
                 enemy.health -= bullet.damage;
                 enemy.damageFlash = 20; // Flash white when hit (longer duration)
                 bullets.splice(i, 1);
-                triggerImpact(1.6, 6);
+                triggerImpact(1.6, 6, enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
                 
                 // Check if enemy is destroyed
                 if (enemy.health <= 0) {
@@ -618,7 +625,7 @@ function checkCollisions() {
             enemies.splice(i, 1);
             lives--;
             updateLives();
-            triggerImpact(3.5, 12);
+            triggerImpact(3.5, 12, player.x, player.y);
             
             if (lives <= 0) {
                 gameOver();
@@ -1377,6 +1384,9 @@ function startGame() {
     cameraShakeTime = 0;
     cameraShakeIntensity = 0;
     impactFlashTime = 0;
+    impactFlashX = player.x;
+    impactFlashY = player.y;
+    impactFlashRadius = 0;
     player.vx = 0;
     player.vy = 0;
     updateScore();
@@ -1437,6 +1447,7 @@ function gameLoop() {
 
     if (impactFlashTime > 0) {
         impactFlashTime--;
+        impactFlashRadius *= 0.92;
     }
 
     // Draw
@@ -1456,9 +1467,23 @@ function gameLoop() {
     renderGlowPass();
     drawVignette();
     if (impactFlashTime > 0) {
-        const flashAlpha = (impactFlashTime / IMPACT_FLASH_DURATION) * 0.35;
-        ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
-        ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+        const flashAlpha = (impactFlashTime / IMPACT_FLASH_DURATION) * 0.25;
+        const flashRadius = Math.max(20, impactFlashRadius);
+        const gradient = ctx.createRadialGradient(
+            impactFlashX,
+            impactFlashY,
+            0,
+            impactFlashX,
+            impactFlashY,
+            flashRadius
+        );
+        gradient.addColorStop(0, `rgba(255, 255, 255, ${flashAlpha})`);
+        gradient.addColorStop(0.6, `rgba(255, 255, 255, ${flashAlpha * 0.4})`);
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(impactFlashX, impactFlashY, flashRadius, 0, Math.PI * 2);
+        ctx.fill();
     }
     ctx.restore();
 
