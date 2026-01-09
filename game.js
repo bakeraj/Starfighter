@@ -544,17 +544,22 @@ function updateEngineTrails() {
     const horizontalOffset = player.vx * (1.5 + speedFactor * 1.2); // Slight shift based on movement direction
     const trailLife = 12 + speedFactor * 12;
     const trailVy = 1.4 + speedFactor * 1.6;
-    const trailCount = 1 + Math.floor(speedFactor * 1.5);
+    const trailSegments = 1 + Math.floor(speedFactor * 1.2);
+    const trailX = player.x + horizontalOffset;
+    const trailY = player.y + player.height / 2;
     
     // Add new trail point at player's engine position with horizontal offset
-    for (let i = 0; i < trailCount; i++) {
-        const spread = (i - (trailCount - 1) / 2) * 1.2;
+    const lastTrail = engineTrails[engineTrails.length - 1];
+    const startX = lastTrail ? lastTrail.x : trailX;
+    const startY = lastTrail ? lastTrail.y : trailY;
+    for (let i = 1; i <= trailSegments; i++) {
+        const t = i / trailSegments;
         engineTrails.push({
-            x: player.x + horizontalOffset + spread,
-            y: player.y + player.height / 2 + i * 0.4,
+            x: startX + (trailX - startX) * t,
+            y: startY + (trailY - startY) * t,
             life: trailLife,
             maxLife: trailLife,
-            vy: trailVy + i * 0.1 // Trail moves downward
+            vy: trailVy // Trail moves downward
         });
     }
     
