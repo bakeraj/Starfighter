@@ -1348,7 +1348,7 @@ function drawOverlayEffects() {
 
     const scanlineHeight = 2;
     const scanlineSpacing = 5;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
     for (let y = 0; y < logicalHeight; y += scanlineSpacing) {
         ctx.fillRect(0, y, logicalWidth, scanlineHeight);
     }
