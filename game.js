@@ -548,7 +548,7 @@ function updateEngineTrails() {
     const trailVy = 1.4 + speedFactor * 1.6;
     const trailSegments = 1 + Math.floor(speedFactor * 1.2);
     const trailX = player.x + horizontalOffset;
-    const trailY = player.y + player.height / 2;
+    const trailY = player.y + player.height / 2 - 3;
     
     // Add new trail point at player's engine position with horizontal offset
     const lastTrail = engineTrails[engineTrails.length - 1];
