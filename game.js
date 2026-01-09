@@ -544,7 +544,7 @@ function updateEngineTrails() {
     const rawOffset = player.vx * (0.8 + speedFactor * 0.4); // Slight shift based on movement direction
     const maxOffset = player.width * 0.15;
     const horizontalOffset = Math.max(-maxOffset, Math.min(maxOffset, rawOffset));
-    const trailLife = 8 + speedFactor * 6;
+    const trailLife = 7 + speedFactor * 5;
     const trailVy = 1 + speedFactor * 1.1;
     const trailSegments = 1 + Math.floor(speedFactor);
     const trailX = player.x + horizontalOffset;
@@ -575,7 +575,7 @@ function updateEngineTrails() {
     }
     
     // Limit trail length
-    const maxTrails = 6 + Math.round(speedFactor * 6);
+    const maxTrails = 5 + Math.round(speedFactor * 5);
     while (engineTrails.length > maxTrails) {
         engineTrails.shift();
     }
@@ -697,13 +697,16 @@ function drawEngineTrails(targetCtx = ctx) {
     };
 
     drawCtx.save();
-    drawCtx.globalAlpha = 0.2 + speedFactor * 0.2; // Less prominent
+    drawCtx.globalAlpha = 0.2 + speedFactor * 0.18; // Less prominent
     
     for (let i = 0; i < engineTrails.length - 1; i++) {
         const trail = engineTrails[i];
         const nextTrail = engineTrails[i + 1];
-        const alpha = (trail.life / (trail.maxLife || 20)) * (0.4 + speedFactor * 0.3);
-        const width = (3 + speedFactor * 4) * alpha;
+        const lifeRatio = trail.life / (trail.maxLife || 20);
+        const headFactor = 1 - i / (engineTrails.length - 1);
+        const baseBoost = 0.6 + headFactor * 0.8;
+        const alpha = Math.pow(lifeRatio, 1.6) * (0.35 + speedFactor * 0.25);
+        const width = (3.2 + speedFactor * 3.2) * alpha * baseBoost;
         
         const gradient = drawCtx.createLinearGradient(trail.x, trail.y, nextTrail.x, nextTrail.y);
         gradient.addColorStop(0, `rgba(${flameColor.r}, ${flameColor.g}, ${flameColor.b}, ${alpha * 0.6})`);
