@@ -287,7 +287,7 @@ function createEnemy() {
         maxHealth: health,
         damageFlash: 0, // For visual feedback when hit
         time: Math.random() * Math.PI * 2,
-        pulseSpeed: Math.random() * 0.02 + 0.01
+        pulseSpeed: Math.random() * 0.035 + 0.015
     });
 }
 
@@ -567,6 +567,12 @@ function updateEnemies() {
         // Update position based on velocity
         enemy.x += enemy.vx;
         enemy.y += enemy.vy;
+        if (enemy.time === undefined) {
+            enemy.time = Math.random() * Math.PI * 2;
+        }
+        if (enemy.pulseSpeed === undefined) {
+            enemy.pulseSpeed = Math.random() * 0.035 + 0.015;
+        }
         enemy.time += enemy.pulseSpeed;
         
         // Bounce off horizontal edges
@@ -1169,9 +1175,9 @@ function drawEnemies() {
         const w = enemy.width;
         const h = enemy.height;
         const pulse = (Math.sin(enemy.time) + 1) / 2;
-        const corePulse = 0.6 + pulse * 0.35;
-        const coreSize = 0.9 + pulse * 0.12;
-        const shimmerAngle = Math.sin(enemy.time * 0.45) * 0.18;
+        const corePulse = 0.45 + pulse * 0.45;
+        const coreSize = 0.82 + pulse * 0.24;
+        const shimmerAngle = Math.sin(enemy.time * 0.6) * 0.32;
         const baseHighlightAngle = Math.atan2(h / 2, w / 3) + shimmerAngle;
         const highlightLength = Math.hypot(w / 3, h / 2);
         const highlightDx = Math.cos(baseHighlightAngle) * highlightLength;
