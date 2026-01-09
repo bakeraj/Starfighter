@@ -19,6 +19,7 @@ glowCtx.scale(dpr, dpr);
 let gameState = 'start'; // 'start', 'playing', 'gameOver'
 let score = 0;
 let lives = 3;
+const maxLives = 3;
 let gameSpeed = 1;
 let shootCooldown = 0;
 let shootFromLeft = true; // Alternating between left and right wing
@@ -38,6 +39,13 @@ const MAX_SHAKE_INTENSITY = 4;
 const SHAKE_DECAY = 0.9;
 const IMPACT_FLASH_DURATION = 10;
 const IMPACT_FLASH_RADIUS = 140;
+const scoreElement = document.getElementById('score');
+const scoreHud = document.querySelector('.score');
+const scoreDeltaElement = document.getElementById('scoreDelta');
+const livesElement = document.getElementById('lives');
+let lastScore = 0;
+let scorePulseTimeout = null;
+let scoreDeltaTimeout = null;
 
 // Player object
 const player = {
@@ -1532,11 +1540,58 @@ function renderGlowPass() {
 
 // Update HUD
 function updateScore() {
-    document.getElementById('score').textContent = score;
+    const delta = score - lastScore;
+    scoreElement.textContent = score;
+
+    if (delta !== 0) {
+        scoreHud.classList.remove('score-pulse');
+        void scoreHud.offsetWidth;
+        scoreHud.classList.add('score-pulse');
+        if (scorePulseTimeout) {
+            clearTimeout(scorePulseTimeout);
+        }
+        scorePulseTimeout = setTimeout(() => {
+            scoreHud.classList.remove('score-pulse');
+        }, 700);
+
+        showScoreDelta(delta);
+    }
+
+    lastScore = score;
 }
 
 function updateLives() {
-    document.getElementById('lives').textContent = lives;
+    livesElement.innerHTML = '';
+    for (let i = 0; i < Math.max(lives, 0); i++) {
+        const icon = document.createElement('span');
+        icon.className = 'life-icon';
+        icon.textContent = '❤';
+        livesElement.appendChild(icon);
+    }
+    if (lives === 0) {
+        for (let i = 0; i < maxLives; i++) {
+            const faded = document.createElement('span');
+            faded.className = 'life-icon';
+            faded.textContent = '♡';
+            livesElement.appendChild(faded);
+        }
+    }
+}
+
+function showScoreDelta(delta) {
+    if (!scoreDeltaElement) {
+        return;
+    }
+    scoreDeltaElement.textContent = `${delta > 0 ? '+' : ''}${delta}`;
+    scoreDeltaElement.classList.remove('score-delta-animate');
+    void scoreDeltaElement.offsetWidth;
+    scoreDeltaElement.classList.add('score-delta-animate');
+    if (scoreDeltaTimeout) {
+        clearTimeout(scoreDeltaTimeout);
+    }
+    scoreDeltaTimeout = setTimeout(() => {
+        scoreDeltaElement.classList.remove('score-delta-animate');
+    }, 900);
 }
 
 // Game state functions
@@ -1544,6 +1599,7 @@ function startGame() {
     gameState = 'playing';
     score = 0;
     lives = 3;
+    lastScore = score;
     bullets = [];
     enemies = [];
     particles = [];
