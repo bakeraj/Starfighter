@@ -63,6 +63,8 @@ let torpedoes = [];
 let explosions = []; // For torpedo explosions
 let engineTrails = []; // For player ship engine trails
 let nebulaTexture = null; // Offscreen nebula texture
+let overlayNoiseCanvas = null;
+let overlayNoisePattern = null;
 
 // Input handling
 const keys = {};
@@ -213,6 +215,26 @@ function initDust() {
             particles
         };
     });
+}
+
+function initOverlayNoise() {
+    const noiseCanvas = document.createElement('canvas');
+    const noiseSize = 64;
+    noiseCanvas.width = noiseSize;
+    noiseCanvas.height = noiseSize;
+    const noiseCtx = noiseCanvas.getContext('2d');
+    const imageData = noiseCtx.createImageData(noiseSize, noiseSize);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+        const value = Math.floor(Math.random() * 255);
+        data[i] = value;
+        data[i + 1] = value;
+        data[i + 2] = value;
+        data[i + 3] = Math.floor(Math.random() * 80);
+    }
+    noiseCtx.putImageData(imageData, 0, 0);
+    overlayNoiseCanvas = noiseCanvas;
+    overlayNoisePattern = ctx.createPattern(overlayNoiseCanvas, 'repeat');
 }
 
 // Create bullet
@@ -1425,6 +1447,26 @@ function drawVignette() {
     ctx.restore();
 }
 
+function drawOverlayEffects() {
+    ctx.save();
+
+    const scanlineHeight = 2;
+    const scanlineSpacing = 5;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
+    for (let y = 0; y < logicalHeight; y += scanlineSpacing) {
+        ctx.fillRect(0, y, logicalWidth, scanlineHeight);
+    }
+
+    if (overlayNoisePattern) {
+        ctx.globalAlpha = 0.08;
+        ctx.fillStyle = overlayNoisePattern;
+        ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+        ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+}
+
 function renderGlowPass() {
     glowCtx.clearRect(0, 0, logicalWidth, logicalHeight);
     drawEngineTrails(glowCtx);
@@ -1571,4 +1613,5 @@ function gameLoop() {
 
 // Initialize
 initStars();
+initOverlayNoise();
 drawStars();
