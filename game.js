@@ -541,12 +541,12 @@ function updateEngineTrails() {
     const speed = Math.hypot(player.vx, player.vy);
     const speedFactor = Math.min(speed / player.maxSpeed, 1.6);
     // Calculate horizontal offset based on player's horizontal velocity
-    const rawOffset = player.vx * (1.2 + speedFactor * 0.6); // Slight shift based on movement direction
+    const rawOffset = player.vx * (0.8 + speedFactor * 0.4); // Slight shift based on movement direction
     const maxOffset = player.width * 0.15;
     const horizontalOffset = Math.max(-maxOffset, Math.min(maxOffset, rawOffset));
-    const trailLife = 12 + speedFactor * 12;
-    const trailVy = 1.4 + speedFactor * 1.6;
-    const trailSegments = 1 + Math.floor(speedFactor * 1.2);
+    const trailLife = 8 + speedFactor * 6;
+    const trailVy = 1 + speedFactor * 1.1;
+    const trailSegments = 1 + Math.floor(speedFactor);
     const trailX = player.x + horizontalOffset;
     const trailY = player.y + player.height / 2 - 3;
     
@@ -575,7 +575,7 @@ function updateEngineTrails() {
     }
     
     // Limit trail length
-    const maxTrails = 8 + Math.round(speedFactor * 10);
+    const maxTrails = 6 + Math.round(speedFactor * 6);
     while (engineTrails.length > maxTrails) {
         engineTrails.shift();
     }
