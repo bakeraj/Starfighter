@@ -42,8 +42,11 @@ const IMPACT_FLASH_RADIUS = 140;
 const scoreElement = document.getElementById('score');
 const scoreHud = document.querySelector('.score');
 const livesElement = document.getElementById('lives');
+const livesHud = document.querySelector('.lives');
 let lastScore = 0;
 let scorePulseTimeout = null;
+let lastLives = lives;
+let livesPulseTimeout = null;
 
 // Player object
 const player = {
@@ -1558,6 +1561,17 @@ function updateScore() {
 }
 
 function updateLives() {
+    if (lives < lastLives) {
+        livesHud.classList.remove('lives-pulse');
+        void livesHud.offsetWidth;
+        livesHud.classList.add('lives-pulse');
+        if (livesPulseTimeout) {
+            clearTimeout(livesPulseTimeout);
+        }
+        livesPulseTimeout = setTimeout(() => {
+            livesHud.classList.remove('lives-pulse');
+        }, 450);
+    }
     livesElement.innerHTML = '';
     for (let i = 0; i < Math.max(lives, 0); i++) {
         const icon = document.createElement('span');
@@ -1573,6 +1587,7 @@ function updateLives() {
             livesElement.appendChild(faded);
         }
     }
+    lastLives = lives;
 }
 
 // Game state functions
@@ -1581,6 +1596,7 @@ function startGame() {
     score = 0;
     lives = 3;
     lastScore = score;
+    lastLives = lives;
     bullets = [];
     enemies = [];
     particles = [];
