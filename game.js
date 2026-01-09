@@ -285,7 +285,9 @@ function createEnemy() {
         color: '#ff4444',
         health: health,
         maxHealth: health,
-        damageFlash: 0 // For visual feedback when hit
+        damageFlash: 0, // For visual feedback when hit
+        time: Math.random() * Math.PI * 2,
+        pulseSpeed: Math.random() * 0.035 + 0.015
     });
 }
 
@@ -565,6 +567,13 @@ function updateEnemies() {
         // Update position based on velocity
         enemy.x += enemy.vx;
         enemy.y += enemy.vy;
+        if (enemy.time === undefined) {
+            enemy.time = Math.random() * Math.PI * 2;
+        }
+        if (enemy.pulseSpeed === undefined) {
+            enemy.pulseSpeed = Math.random() * 0.035 + 0.015;
+        }
+        enemy.time += enemy.pulseSpeed;
         
         // Bounce off horizontal edges
         if (enemy.x <= 0 || enemy.x + enemy.width >= logicalWidth) {
@@ -1165,6 +1174,14 @@ function drawEnemies() {
         const y = enemy.y + enemy.height / 2;
         const w = enemy.width;
         const h = enemy.height;
+        const pulse = (Math.sin(enemy.time) + 1) / 2;
+        const corePulse = 0.45 + pulse * 0.45;
+        const coreSize = 0.82 + pulse * 0.24;
+        const shimmerAngle = Math.sin(enemy.time * 0.6) * 0.32;
+        const baseHighlightAngle = Math.atan2(h / 2, w / 3) + shimmerAngle;
+        const highlightLength = Math.hypot(w / 3, h / 2);
+        const highlightDx = Math.cos(baseHighlightAngle) * highlightLength;
+        const highlightDy = Math.sin(baseHighlightAngle) * highlightLength;
         
         ctx.save();
         
@@ -1207,10 +1224,10 @@ function drawEnemies() {
         // Directional highlight (top-left) and rim shadow (bottom-right)
         ctx.shadowBlur = 0;
         const enemyHighlight = ctx.createLinearGradient(
-            x - w / 3,
-            y - h / 2,
-            x + w / 3,
-            y + h / 2
+            x - highlightDx,
+            y - highlightDy,
+            x + highlightDx,
+            y + highlightDy
         );
         enemyHighlight.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
         enemyHighlight.addColorStop(0.55, 'rgba(255, 255, 255, 0.08)');
@@ -1228,10 +1245,10 @@ function drawEnemies() {
         ctx.fill();
 
         const enemyShadow = ctx.createLinearGradient(
-            x + w / 3,
-            y + h / 2,
-            x - w / 3,
-            y - h / 2
+            x + highlightDx,
+            y + highlightDy,
+            x - highlightDx,
+            y - highlightDy
         );
         enemyShadow.addColorStop(0, 'rgba(0, 0, 0, 0.3)');
         enemyShadow.addColorStop(0.6, 'rgba(0, 0, 0, 0.12)');
@@ -1304,12 +1321,12 @@ function drawEnemies() {
         ctx.shadowBlur = 0;
         if (flashIntensity > 0) {
             const r = Math.floor(170 + (255 - 170) * flashIntensity);
-            ctx.fillStyle = `rgb(255, ${r}, ${r})`;
+            ctx.fillStyle = `rgba(255, ${r}, ${r}, ${corePulse})`;
         } else {
-            ctx.fillStyle = '#aa0000';
+            ctx.fillStyle = `rgba(170, 0, 0, ${corePulse})`;
         }
         ctx.beginPath();
-        ctx.ellipse(x, y, w/3, h/3, 0, 0, Math.PI * 2);
+        ctx.ellipse(x, y, (w / 3) * coreSize, (h / 3) * coreSize, 0, 0, Math.PI * 2);
         ctx.fill();
         
         // Engine glow (rear)
