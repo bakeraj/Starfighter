@@ -41,11 +41,9 @@ const IMPACT_FLASH_DURATION = 10;
 const IMPACT_FLASH_RADIUS = 140;
 const scoreElement = document.getElementById('score');
 const scoreHud = document.querySelector('.score');
-const scoreDeltaElement = document.getElementById('scoreDelta');
 const livesElement = document.getElementById('lives');
 let lastScore = 0;
 let scorePulseTimeout = null;
-let scoreDeltaTimeout = null;
 
 // Player object
 const player = {
@@ -1554,7 +1552,6 @@ function updateScore() {
             scoreHud.classList.remove('score-pulse');
         }, 700);
 
-        showScoreDelta(delta);
     }
 
     lastScore = score;
@@ -1576,22 +1573,6 @@ function updateLives() {
             livesElement.appendChild(faded);
         }
     }
-}
-
-function showScoreDelta(delta) {
-    if (!scoreDeltaElement) {
-        return;
-    }
-    scoreDeltaElement.textContent = `${delta > 0 ? '+' : ''}${delta}`;
-    scoreDeltaElement.classList.remove('score-delta-animate');
-    void scoreDeltaElement.offsetWidth;
-    scoreDeltaElement.classList.add('score-delta-animate');
-    if (scoreDeltaTimeout) {
-        clearTimeout(scoreDeltaTimeout);
-    }
-    scoreDeltaTimeout = setTimeout(() => {
-        scoreDeltaElement.classList.remove('score-delta-animate');
-    }, 900);
 }
 
 // Game state functions
