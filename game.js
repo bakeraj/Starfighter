@@ -760,6 +760,50 @@ function drawPlayer() {
     ctx.lineTo(x + w/6, y - h/4); // Top right of body
     ctx.closePath();
     ctx.fill();
+
+    // Directional lighting highlights (top-left) and rim shadow (bottom-right)
+    ctx.shadowBlur = 0;
+    const bodyHighlight = ctx.createLinearGradient(
+        x - w / 4,
+        y - h / 2,
+        x + w / 4,
+        y + h / 2
+    );
+    bodyHighlight.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+    bodyHighlight.addColorStop(0.5, 'rgba(255, 255, 255, 0.08)');
+    bodyHighlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = bodyHighlight;
+    ctx.beginPath();
+    ctx.moveTo(x, y - h/2);
+    ctx.lineTo(x - w/6, y - h/4);
+    ctx.lineTo(x - w/6, y + h/4);
+    ctx.lineTo(x - w/8, y + h/2);
+    ctx.lineTo(x + w/8, y + h/2);
+    ctx.lineTo(x + w/6, y + h/4);
+    ctx.lineTo(x + w/6, y - h/4);
+    ctx.closePath();
+    ctx.fill();
+
+    const bodyShadow = ctx.createLinearGradient(
+        x + w / 3,
+        y + h / 2,
+        x - w / 3,
+        y - h / 2
+    );
+    bodyShadow.addColorStop(0, 'rgba(0, 0, 0, 0.28)');
+    bodyShadow.addColorStop(0.55, 'rgba(0, 0, 0, 0.12)');
+    bodyShadow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = bodyShadow;
+    ctx.beginPath();
+    ctx.moveTo(x, y - h/2);
+    ctx.lineTo(x - w/6, y - h/4);
+    ctx.lineTo(x - w/6, y + h/4);
+    ctx.lineTo(x - w/8, y + h/2);
+    ctx.lineTo(x + w/8, y + h/2);
+    ctx.lineTo(x + w/6, y + h/4);
+    ctx.lineTo(x + w/6, y - h/4);
+    ctx.closePath();
+    ctx.fill();
     
     // Left wing - clearly separated, scales with banking - darker grey
     const wingGradient = ctx.createLinearGradient(x - w/2, y, x - w/6, y);
@@ -773,6 +817,40 @@ function drawPlayer() {
     ctx.lineTo(x - w/6, y + h/6); // Connection to body
     ctx.closePath();
     ctx.fill();
+
+    const leftWingHighlight = ctx.createLinearGradient(
+        x - w / 2 * leftScale,
+        y - h / 6,
+        x - w / 6,
+        y + h / 6
+    );
+    leftWingHighlight.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+    leftWingHighlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = leftWingHighlight;
+    ctx.beginPath();
+    ctx.moveTo(x - w/6, y - h/6);
+    ctx.lineTo(x - w/2 * leftScale, y - h/8);
+    ctx.lineTo(x - w/2 * leftScale, y + h/8);
+    ctx.lineTo(x - w/6, y + h/6);
+    ctx.closePath();
+    ctx.fill();
+
+    const leftWingShadow = ctx.createLinearGradient(
+        x - w / 6,
+        y + h / 6,
+        x - w / 2 * leftScale,
+        y - h / 6
+    );
+    leftWingShadow.addColorStop(0, 'rgba(0, 0, 0, 0.25)');
+    leftWingShadow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = leftWingShadow;
+    ctx.beginPath();
+    ctx.moveTo(x - w/6, y - h/6);
+    ctx.lineTo(x - w/2 * leftScale, y - h/8);
+    ctx.lineTo(x - w/2 * leftScale, y + h/8);
+    ctx.lineTo(x - w/6, y + h/6);
+    ctx.closePath();
+    ctx.fill();
     
     // Right wing - clearly separated, scales with banking - darker grey
     const rightWingGradient = ctx.createLinearGradient(x + w/6, y, x + w/2, y);
@@ -784,6 +862,40 @@ function drawPlayer() {
     ctx.lineTo(x + w/2 * rightScale, y - h/8); // Wing tip (scales)
     ctx.lineTo(x + w/2 * rightScale, y + h/8); // Wing tip bottom (scales)
     ctx.lineTo(x + w/6, y + h/6); // Connection to body
+    ctx.closePath();
+    ctx.fill();
+
+    const rightWingHighlight = ctx.createLinearGradient(
+        x + w / 6,
+        y - h / 6,
+        x + w / 2 * rightScale,
+        y + h / 6
+    );
+    rightWingHighlight.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+    rightWingHighlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = rightWingHighlight;
+    ctx.beginPath();
+    ctx.moveTo(x + w/6, y - h/6);
+    ctx.lineTo(x + w/2 * rightScale, y - h/8);
+    ctx.lineTo(x + w/2 * rightScale, y + h/8);
+    ctx.lineTo(x + w/6, y + h/6);
+    ctx.closePath();
+    ctx.fill();
+
+    const rightWingShadow = ctx.createLinearGradient(
+        x + w / 2 * rightScale,
+        y + h / 6,
+        x + w / 6,
+        y - h / 6
+    );
+    rightWingShadow.addColorStop(0, 'rgba(0, 0, 0, 0.25)');
+    rightWingShadow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = rightWingShadow;
+    ctx.beginPath();
+    ctx.moveTo(x + w/6, y - h/6);
+    ctx.lineTo(x + w/2 * rightScale, y - h/8);
+    ctx.lineTo(x + w/2 * rightScale, y + h/8);
+    ctx.lineTo(x + w/6, y + h/6);
     ctx.closePath();
     ctx.fill();
     
@@ -931,6 +1043,50 @@ function drawEnemies() {
         ctx.lineTo(x + w/3, y - h/6); // Top right
         ctx.closePath();
         ctx.fill();
+
+        // Directional highlight (top-left) and rim shadow (bottom-right)
+        ctx.shadowBlur = 0;
+        const enemyHighlight = ctx.createLinearGradient(
+            x - w / 3,
+            y - h / 2,
+            x + w / 3,
+            y + h / 2
+        );
+        enemyHighlight.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+        enemyHighlight.addColorStop(0.55, 'rgba(255, 255, 255, 0.08)');
+        enemyHighlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = enemyHighlight;
+        ctx.beginPath();
+        ctx.moveTo(x, y - h/2);
+        ctx.lineTo(x - w/3, y - h/6);
+        ctx.lineTo(x - w/2, y + h/4);
+        ctx.lineTo(x - w/4, y + h/2);
+        ctx.lineTo(x + w/4, y + h/2);
+        ctx.lineTo(x + w/2, y + h/4);
+        ctx.lineTo(x + w/3, y - h/6);
+        ctx.closePath();
+        ctx.fill();
+
+        const enemyShadow = ctx.createLinearGradient(
+            x + w / 3,
+            y + h / 2,
+            x - w / 3,
+            y - h / 2
+        );
+        enemyShadow.addColorStop(0, 'rgba(0, 0, 0, 0.3)');
+        enemyShadow.addColorStop(0.6, 'rgba(0, 0, 0, 0.12)');
+        enemyShadow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = enemyShadow;
+        ctx.beginPath();
+        ctx.moveTo(x, y - h/2);
+        ctx.lineTo(x - w/3, y - h/6);
+        ctx.lineTo(x - w/2, y + h/4);
+        ctx.lineTo(x - w/4, y + h/2);
+        ctx.lineTo(x + w/4, y + h/2);
+        ctx.lineTo(x + w/2, y + h/4);
+        ctx.lineTo(x + w/3, y - h/6);
+        ctx.closePath();
+        ctx.fill();
         
         // Side panels/armor (with flash)
         if (flashIntensity > 0) {
@@ -940,6 +1096,48 @@ function drawEnemies() {
             ctx.fillStyle = '#cc2222';
         }
         ctx.fillRect(x - w/2, y - h/6, w/4, h/3);
+        ctx.fillRect(x + w/4, y - h/6, w/4, h/3);
+
+        const panelHighlight = ctx.createLinearGradient(
+            x - w / 2,
+            y - h / 6,
+            x - w / 4,
+            y + h / 6
+        );
+        panelHighlight.addColorStop(0, 'rgba(255, 255, 255, 0.18)');
+        panelHighlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = panelHighlight;
+        ctx.fillRect(x - w/2, y - h/6, w/4, h/3);
+        const panelHighlightRight = ctx.createLinearGradient(
+            x + w / 4,
+            y - h / 6,
+            x + w / 2,
+            y + h / 6
+        );
+        panelHighlightRight.addColorStop(0, 'rgba(255, 255, 255, 0.18)');
+        panelHighlightRight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = panelHighlightRight;
+        ctx.fillRect(x + w/4, y - h/6, w/4, h/3);
+
+        const panelShadow = ctx.createLinearGradient(
+            x - w / 4,
+            y + h / 6,
+            x - w / 2,
+            y - h / 6
+        );
+        panelShadow.addColorStop(0, 'rgba(0, 0, 0, 0.25)');
+        panelShadow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = panelShadow;
+        ctx.fillRect(x - w/2, y - h/6, w/4, h/3);
+        const panelShadowRight = ctx.createLinearGradient(
+            x + w / 2,
+            y + h / 6,
+            x + w / 4,
+            y - h / 6
+        );
+        panelShadowRight.addColorStop(0, 'rgba(0, 0, 0, 0.25)');
+        panelShadowRight.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = panelShadowRight;
         ctx.fillRect(x + w/4, y - h/6, w/4, h/3);
         
         // Central core (darker, with flash)
