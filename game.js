@@ -129,17 +129,18 @@ function initStars() {
     nebulaCtx.clearRect(0, 0, logicalWidth, logicalHeight);
 
     const nebulaColors = [
-        'rgba(60, 50, 120, 0.2)',
-        'rgba(40, 70, 140, 0.18)',
-        'rgba(90, 40, 110, 0.16)'
+        'rgba(120, 70, 200, 0.45)',
+        'rgba(70, 140, 220, 0.4)',
+        'rgba(180, 80, 140, 0.38)'
     ];
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 9; i++) {
         const x = Math.random() * logicalWidth;
         const y = Math.random() * logicalHeight;
         const radius = Math.random() * 220 + 180;
         const gradient = nebulaCtx.createRadialGradient(x, y, 0, x, y, radius);
         const color = nebulaColors[Math.floor(Math.random() * nebulaColors.length)];
         gradient.addColorStop(0, color);
+        gradient.addColorStop(0.55, 'rgba(20, 10, 40, 0.18)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         nebulaCtx.fillStyle = gradient;
         nebulaCtx.beginPath();
@@ -153,7 +154,7 @@ function initStars() {
         offsetY: 0,
         driftX: 0.02,
         driftY: 0.01,
-        alpha: 0.18
+        alpha: 0.38
     };
 }
 
@@ -627,6 +628,7 @@ function isColliding(obj1, obj2) {
 function drawStars() {
     if (nebulaTexture) {
         ctx.save();
+        ctx.globalCompositeOperation = 'screen';
         ctx.globalAlpha = nebulaTexture.alpha;
         const nebulaX = -nebulaTexture.offsetX;
         const nebulaY = -nebulaTexture.offsetY;
@@ -1301,6 +1303,24 @@ function drawParticles() {
     }
 }
 
+function drawVignette() {
+    const gradient = ctx.createRadialGradient(
+        logicalWidth / 2,
+        logicalHeight / 2,
+        logicalHeight * 0.2,
+        logicalWidth / 2,
+        logicalHeight / 2,
+        logicalHeight * 0.7
+    );
+    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    gradient.addColorStop(0.6, 'rgba(0, 0, 0, 0.08)');
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
+    ctx.save();
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+    ctx.restore();
+}
+
 function renderGlowPass() {
     glowCtx.clearRect(0, 0, logicalWidth, logicalHeight);
     drawEngineTrails(glowCtx);
@@ -1394,6 +1414,7 @@ function gameLoop() {
     drawPlayer();
     drawParticles();
     renderGlowPass();
+    drawVignette();
 
     requestAnimationFrame(gameLoop);
 }
